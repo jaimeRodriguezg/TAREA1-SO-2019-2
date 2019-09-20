@@ -4,8 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-
-int en_mazo = 108;
+#include <time.h>
+srand(time(NULL));
+//hacer un numero aleatorio entre 0 y en_mazo, de esta manera, recorro las cartas
+//(readdir) del mazo hasta el numero, y saco esa carta para el jugador
+int en_mazo = 106;
 
 void crear_cartas(){
   char aux[30];
@@ -46,6 +49,34 @@ void crear_cartas(){
   }
 }
 
+//Funcion sacar_carta: mueve n carta(s) aleatoria(s) desde el mazo a la mano de jugador
+void sacar_carta(char *jugador,int n){
+  char *carta,aux1[30],aux2[30];
+  int i=0,pos,cont;
+  DIR *dir;
+  struct dirent *temp;
+  while (i<n){
+    dir = opendir("mazo");
+    cont = 0;
+    pos = rand() % en_mazo;
+    while (cont<pos){
+      temp=readdir(dir);
+      carta = temp->d_name;
+      if (carta[0]!='.') cont++;
+    }
+    temp = readdir(dir);
+    snprintf(aux1,sizeof(aux1),"mazo/%s",temp->d_name);
+    snprintf(aux2,sizeof(aux2),"%s/%s",jugador,temp->d_name);
+    rename(aux1,aux2);
+    i++;
+    en_mazo--;
+    closedir(dir);
+  }
+}
+
+//Funcion jugar_carta: revisa que la carta jugada por el jugador sea correcto jugarla
+//ya sea siendo negra, o coincidiendo en color o tipo. En caso de no serla, el jugador
+//debe sacar una carta.
 void jugar_carta(char *jugador,char *carta,char *discard){
   char aux1[30],aux2[33];
   snprintf(aux2,sizeof(aux2),"discard/%s.txt",discard);
@@ -61,15 +92,13 @@ void jugar_carta(char *jugador,char *carta,char *discard){
     color = strtok(NULL," ");
     tipo_d = strtok(discard," ");
     color_d = strtok(NULL," ");
-    if (strcmp(tipo,tipo_d) && strcmp(color,color_d)) printf("huevo");
+    if (strcmp(tipo,tipo_d) && strcmp(color,color_d)) sacar_carta(jugador,1);
   }
 }
 
 int main(void){
-  char jugadores[4][10];/*
-  char *aux;
-  DIR *dir;
-  struct dirent *carta_mano;*/
+  char jugadores[4][10];
+  char *aux;/*
 
   //Creacion de directorios
   mkdir("mazo",0700);
@@ -83,26 +112,5 @@ int main(void){
   }
   crear_cartas();
 
-  //mover carta de directorio
-  rename("mazo/0 azul.txt","b/0 azul.txt");
-  rename("mazo/0 rojo.txt","discard/0 rojo.txt");
-
-  //funcionamiento de readdir
-  /*
-  dir = opendir("mazo");
-  if (!dir) exit(1);
-  else{int i=1;
-  while ( (carta_mano = readdir(dir)) ) {
-    aux = carta_mano->d_name;
-    if (aux[0]!='.') {
-      aux = strtok(aux,".");
-      printf("%d-%s\n",i,aux);
-      i++;
-    }
-  }
-  closedir(dir);}*/
-  char wea[]="0 azul";
-  char wea2[]="0 rojo";
-  jugar_carta("b",wea,wea2);
   return 0;
 }
