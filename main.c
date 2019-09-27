@@ -5,7 +5,8 @@
 #include <string.h>
 #include <dirent.h>
 #include <time.h>
-srand(time(NULL));
+#include<stdbool.h>
+//srand(time(NULL));
 //hacer un numero aleatorio entre 0 y en_mazo, de esta manera, recorro las cartas
 //(readdir) del mazo hasta el numero, y saco esa carta para el jugador
 int en_mazo = 106;
@@ -56,18 +57,18 @@ void sacar_carta(char *jugador,int n){
   DIR *dir;
   struct dirent *temp;
   while (i<n){
-    dir = opendir("mazo");
+    dir = opendir("mazo"); //Abre directorio mazo
     cont = 0;
-    pos = rand() % en_mazo;
+    pos = rand() % en_mazo; //genera numero aleatorio del total de valores que hay en el mazo
     while (cont<pos){
       temp=readdir(dir);
-      carta = temp->d_name;
+      carta = temp->d_name; //carta guarda el nombre de un archivo
       if (carta[0]!='.') cont++;
     }
     temp = readdir(dir);
     snprintf(aux1,sizeof(aux1),"mazo/%s",temp->d_name);
     snprintf(aux2,sizeof(aux2),"%s/%s",jugador,temp->d_name);
-    rename(aux1,aux2);
+    rename(aux1,aux2); //mueve el archivo del aux1 al aux2
     i++;
     en_mazo--;
     closedir(dir);
@@ -98,7 +99,8 @@ void jugar_carta(char *jugador,char *carta,char *discard){
 
 int main(void){
   char jugadores[4][10];
-  char *aux;/*
+  char *aux;
+  bool ciclo = true;
 
   //Creacion de directorios
   mkdir("mazo",0700);
@@ -111,6 +113,19 @@ int main(void){
     mkdir(jugadores[i],0700);
   }
   crear_cartas();
+
+  while(ciclo){
+    int opcion;
+    printf("Desee la accion a realizar: \n");
+    printf("1. Sacar carta \n2. Jugar carta \n3. Salir\n");
+    scanf("%d",&opcion);
+    if (opcion == 1 || opcion == 2 || opcion == 3) ciclo = false;
+  }
+
+  //sacar_carta("jaime",2);
+  //char var1[] = "3 amarillo";
+  //char var2[] = "3 rojo";
+  //jugar_carta("jaime",var1,var2);
 
   return 0;
 }
