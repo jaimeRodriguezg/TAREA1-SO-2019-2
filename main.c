@@ -96,6 +96,19 @@ void jugar_carta(char *jugador,char *carta,char *discard){
     if (strcmp(tipo,tipo_d) && strcmp(color,color_d)) sacar_carta(jugador,1);
   }
 }
+  int comprobar_opcion(int max){
+    int n;
+    bool ciclo = true;
+    while(ciclo){
+      scanf("%d",&n);
+      if (n > max || n <= 0){
+        printf("Ingrese una opcion dentro del rango \n");
+      }else {
+        ciclo = false;
+        return n;
+      }
+    }
+  }
 
 int main(void){
   char jugadores[4][10];
@@ -114,17 +127,26 @@ int main(void){
   }
   crear_cartas();
 
+
   while(ciclo){
     int opcion;
     printf("Desee la accion a realizar: \n");
     printf("1. Sacar carta \n2. Jugar carta \n3. Salir\n");
-    scanf("%d",&opcion);
-    if (opcion == 1 || opcion == 2 || opcion == 3) ciclo = false;
+    opcion = comprobar_opcion(3);
+    if (opcion == 1){
+      sacar_carta(jugadores[1],1);
+      printf("El jugador %s ha sacado 1 carta \n", jugadores[1]);
+    }if(opcion == 2){
+      char var1[] = "3 amarillo";
+      char var2[] = "3 rojo";
+      jugar_carta(jugadores[1],var1, var2);
+    }if(opcion == 3){
+      ciclo = false;
+    }
   }
 
   //sacar_carta("jaime",2);
-  //char var1[] = "3 amarillo";
-  //char var2[] = "3 rojo";
+
   //jugar_carta("jaime",var1,var2);
 
   return 0;
