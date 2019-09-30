@@ -96,24 +96,35 @@ void jugar_carta(char *jugador,char *carta,char *discard){
     if (strcmp(tipo,tipo_d) && strcmp(color,color_d)) sacar_carta(jugador,1);
   }
 }
-  int comprobar_opcion(int max){
-    int n;
-    bool ciclo = true;
-    while(ciclo){
-      scanf("%d",&n);
-      if (n > max || n <= 0){
-        printf("Ingrese una opcion dentro del rango \n");
-      }else {
-        ciclo = false;
-        return n;
-      }
+int comprobar_opcion(int max){
+  int n;
+  bool ciclo = true;
+  while(ciclo){
+    scanf("%d",&n);
+    if (n > max || n <= 0){
+      printf("Ingrese una opcion dentro del rango \n");
+    }else {
+      ciclo = false;
+      return n;
     }
   }
+}
+  int cambiar_jugador(char jugador_actual[4][10], int jugador){
+    int opcion;
+    printf("el jugador actual es %s \n", &jugador_actual[jugador]);
+    printf("Eliga el jugador: \n");
+    for (int i = 0; i < 4; i++){
+      printf("%d %s\n",i+1,&jugador_actual[i]);
+    }
+    opcion=comprobar_opcion(4);
+    jugador=opcion-1;
+}
 
 int main(void){
   char jugadores[4][10];
   char *aux;
   bool ciclo = true;
+  int jugador=0;
 
   //Creacion de directorios
   mkdir("mazo",0700);
@@ -127,20 +138,23 @@ int main(void){
   }
   crear_cartas();
 
-
   while(ciclo){
     int opcion;
+    printf("El jugador actual es %s\n", jugadores[jugador]);
     printf("Desee la accion a realizar: \n");
-    printf("1. Sacar carta \n2. Jugar carta \n3. Salir\n");
-    opcion = comprobar_opcion(3);
+    printf("1. Sacar carta \n2. Jugar carta \n3. Cambiar de jugador\n4. Salir\n");
+    opcion = comprobar_opcion(4);
     if (opcion == 1){
-      sacar_carta(jugadores[1],1);
-      printf("El jugador %s ha sacado 1 carta \n", jugadores[1]);
+      sacar_carta(jugadores[jugador],1);
+      printf("El jugador %s ha sacado 1 carta \n", jugadores[jugador]);
     }if(opcion == 2){
       char var1[] = "3 amarillo";
       char var2[] = "3 rojo";
-      jugar_carta(jugadores[1],var1, var2);
+      jugar_carta(jugadores[jugador],var1, var2);
+      printf("El jugador %s ha jugado \n",jugadores[jugador]);
     }if(opcion == 3){
+      jugador=cambiar_jugador(jugadores,jugador);
+    }if(opcion == 4){
       ciclo = false;
     }
   }
