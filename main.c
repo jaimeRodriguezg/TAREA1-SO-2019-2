@@ -6,7 +6,7 @@
 #include <dirent.h>
 #include <time.h>
 #include<stdbool.h>
-//srand(time(NULL));
+
 //hacer un numero aleatorio entre 0 y en_mazo, de esta manera, recorro las cartas
 //(readdir) del mazo hasta el numero, y saco esa carta para el jugador
 int en_mazo = 106;
@@ -121,6 +121,7 @@ int comprobar_opcion(int max){
 }
 
 int main(void){
+  srand(time(NULL));
   char jugadores[4][10];
   char *aux;
   bool ciclo = true;
@@ -143,7 +144,7 @@ int main(void){
     printf("El jugador actual es %s\n", jugadores[jugador]);
     printf("Desee la accion a realizar: \n");
     printf("1. Sacar carta \n2. Jugar carta \n3. Cambiar de jugador\n4. Salir\n");
-    opcion = comprobar_opcion(4);
+    opcion = comprobar_opcion(5);
     if (opcion == 1){
       sacar_carta(jugadores[jugador],1);
       printf("El jugador %s ha sacado 1 carta \n", jugadores[jugador]);
