@@ -6,6 +6,9 @@
 #include <dirent.h>
 #include <time.h>
 #include<stdbool.h>
+#ifdef _WIN32
+  #include<windows.h>
+#endif
 
 //hacer un numero aleatorio entre 0 y en_mazo, de esta manera, recorro las cartas
 //(readdir) del mazo hasta el numero, y saco esa carta para el jugador
@@ -96,6 +99,15 @@ void jugar_carta(char *jugador,char *carta,char *discard){
     if (strcmp(tipo,tipo_d) && strcmp(color,color_d)) sacar_carta(jugador,1);
   }
 }
+
+void limpiar(){
+  #ifdef _WIN32
+    system("cls");
+  #else
+    system("clear");
+  #endif
+}
+
 int comprobar_opcion(int max){
   int n;
   bool ciclo = true;
@@ -118,9 +130,13 @@ int comprobar_opcion(int max){
     }
     opcion=comprobar_opcion(4);
     jugador=opcion-1;
+    limpiar();
+    return jugador;
 }
 
 int main(void){
+  //limpiar();
+  printf("¡BIENVENIDO AL UNO!\n");
   srand(time(NULL));
   char jugadores[4][10];
   char *aux;
@@ -134,6 +150,7 @@ int main(void){
     printf("Jugador %d: ",i+1);
     scanf("%s",jugadores[i]);
   }
+  limpiar();
   for (int i=0;i<4;i++) {
     mkdir(jugadores[i],0700);
   }
@@ -147,16 +164,20 @@ int main(void){
     opcion = comprobar_opcion(5);
     if (opcion == 1){
       sacar_carta(jugadores[jugador],1);
+      limpiar();
       printf("El jugador %s ha sacado 1 carta \n", jugadores[jugador]);
     }if(opcion == 2){
+      limpiar();
       char var1[] = "3 amarillo";
       char var2[] = "3 rojo";
       jugar_carta(jugadores[jugador],var1, var2);
       printf("El jugador %s ha jugado \n",jugadores[jugador]);
     }if(opcion == 3){
+      limpiar();
       jugador=cambiar_jugador(jugadores,jugador);
     }if(opcion == 4){
       ciclo = false;
+      limpiar();
     }
   }
 
