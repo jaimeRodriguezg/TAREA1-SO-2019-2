@@ -100,6 +100,25 @@ void jugar_carta(char *jugador,char *carta,char *discard){
   }
 }
 
+int mostrar_mano(char* jugador){
+  int cont=1;
+  char *carta,*aux2;
+  DIR* mano;
+  struct dirent *aux;
+  mano = opendir(jugador);
+  printf("MANO:\n");
+  while(aux = readdir(mano)){
+    carta = (aux->d_name);
+    if (carta[0]!='.'){
+      aux2 = strtok(carta,".()");
+      printf("%d. %s\n",cont,aux2);
+      cont++;
+    }
+  }
+  closedir(mano);
+  return cont;
+}
+
 void limpiar(){
   #ifdef _WIN32
     system("cls");
@@ -151,14 +170,16 @@ int main(void){
     scanf("%s",jugadores[i]);
   }
   limpiar();
+  crear_cartas();
   for (int i=0;i<4;i++) {
     mkdir(jugadores[i],0700);
+    sacar_carta(jugadores[i],5);
   }
-  crear_cartas();
 
   while(ciclo){
-    int opcion;
+    int opcion,n_cartas;
     printf("El jugador actual es %s\n", jugadores[jugador]);
+    mostrar_mano(jugadores[jugador]);
     printf("Desee la accion a realizar: \n");
     printf("1. Sacar carta \n2. Jugar carta \n3. Cambiar de jugador\n4. Salir\n");
     opcion = comprobar_opcion(5);
