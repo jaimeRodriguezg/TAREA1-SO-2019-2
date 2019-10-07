@@ -153,6 +153,29 @@ int comprobar_opcion(int max){
     return jugador;
 }
 
+void uno(char jugador_actual[4][10]){
+  limpiar();
+  int cont,opcion;
+  char *carta;
+  DIR* mano;
+  struct dirent *aux;
+  for(int i=0; i < 4; i++){
+    cont=0;
+    mano = opendir(jugador_actual[i]);
+    while(aux = readdir(mano)){
+      carta = (aux->d_name);
+      if (carta[0]!='.'){
+        cont++;
+      }
+    }
+    if (cont==1){
+      printf("El jugador %s tiene 1 carta en su mano\n",jugador_actual[i]);
+    }
+    closedir(mano);
+  }
+
+}
+
 int main(void){
   //limpiar();
   printf("¡BIENVENIDO AL UNO!\n");
@@ -173,11 +196,12 @@ int main(void){
   crear_cartas();
   for (int i=0;i<4;i++) {
     mkdir(jugadores[i],0700);
-    sacar_carta(jugadores[i],5);
+    sacar_carta(jugadores[i],0);
   }
 
   while(ciclo){
     int opcion,n_cartas;
+    uno(jugadores);
     printf("El jugador actual es %s\n", jugadores[jugador]);
     mostrar_mano(jugadores[jugador]);
     printf("Desee la accion a realizar: \n");
