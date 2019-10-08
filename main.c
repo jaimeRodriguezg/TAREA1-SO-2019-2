@@ -4,15 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h>
 #include <time.h>
 #include<stdbool.h>
 #ifdef _WIN32
   #include<windows.h>
 #endif
 
-//hacer un numero aleatorio entre 0 y en_mazo, de esta manera, recorro las cartas
-//(readdir) del mazo hasta el numero, y saco esa carta para el jugador
-int en_mazo = 106;
+int en_mazo = 108;
 
 void crear_cartas(){
   char aux[30];
@@ -81,11 +80,11 @@ void sacar_carta(char *jugador,int n){
 //Funcion jugar_carta: revisa que la carta jugada por el jugador sea correcto jugarla
 //ya sea siendo negra, o coincidiendo en color o tipo. En caso de no serla, el jugador
 //debe sacar una carta.
-void jugar_carta(char *jugador,char *carta,char *discard){
+char *jugar_carta(char *jugador,char *carta,char *discard, char* cambio_color){
   char aux1[30],aux2[33];
   char name[30],name_d[30];
   char *res;
-  int n;
+  int n;/*
   strcpy(name,carta);
   strcpy(name_d,discard);
   n=comprobar_color(name,name_d);
@@ -96,28 +95,40 @@ void jugar_carta(char *jugador,char *carta,char *discard){
   }else{
     printf("No es valida la carta no puede jugarla\n" );
   }
+  */
+  sprintf(aux2,"discard/%s",discard);
+  remove(aux2);
 
-  snprintf(aux2,sizeof(aux2),"discard/%s",discard);
-  int rmv= remove(aux2);
-
-
-  snprintf(aux1,sizeof(aux1),"%s/%s",jugador,carta);
-  snprintf(aux2,sizeof(aux2),"discard/%s",carta);
+  sprintf(aux1,"%s/%s",jugador,carta);
+  sprintf(aux2,"discard/%s",carta);
   rename(aux1,aux2);
 
+  strtok(carta,".()");
+  strtok(discard,".()");
   //comprobar_color(name,name_d);
-  //if (strcmp(carta,"Color") && strcmp(carta,"+4")){
-    //char *tipo,*color,*tipo_d,*color_d,*colorf,*colorf_d;
-    //tipo = strtok(carta," ");
-    //printf("el tipo de carta es %s\n",tipo );
-    //color = strtok(NULL," ");
-    //printf("el color  de carta es %s\n",color );
-    //tipo_d = strtok(discard," ");
-    //printf("el tipo de discard es %s\n",tipo_d );
-    //color_d = strtok(NULL," ");
-    //printf("elcolor de discard es %s\n",color_d );
-    //if (strcmp(tipo,tipo_d) && strcmp(color,color_d)) sacar_carta(jugador,1);
-  //}
+  if (strcmp(carta,"Color") && strcmp(carta,"+4")){
+    char *tipo,*color,*tipo_d,*color_d,*colorf,*colorf_d;
+    if (!strcmp(discard,"Color") || !strcmp(discard,"+4")){
+      tipo = strtok(carta," ");
+      color = strtok(NULL, " ");
+      if (strcmp(color,cambio_color)) {
+        printf("La carta jugada no coincide con el color indicado por el jugador anterior\n");
+        sacar_carta(jugador,1);
+      }
+    }
+    else{
+      tipo = strtok(carta," ");
+      color = strtok(NULL," ");
+      tipo_d = strtok(discard," ");
+      color_d = strtok(NULL," ");
+      if (strcmp(tipo,tipo_d) && strcmp(color,color_d)) {
+        printf("La carta ha sido mal jugada, %s debió sacar 1 carta\n",jugador);
+        sacar_carta(jugador,1);
+      }
+    }
+    return tipo;
+  }
+  else return carta;
 }
 
 
@@ -128,7 +139,7 @@ int mostrar_mano(char* jugador){
   DIR* mano;
   struct dirent *aux;
   mano = opendir(jugador);
-  printf("MANO:\n");
+  printf("\nMANO:\n");
   while(aux = readdir(mano)){
     carta = (aux->d_name);
     if (carta[0]!='.'){
@@ -153,6 +164,7 @@ int comprobar_opcion(int max){
   int n;
   bool ciclo = true;
   while(ciclo){
+    printf(">> ");
     scanf("%d",&n);
     if (n > max || n <= 0){
       printf("Ingrese una opcion dentro del rango \n");
@@ -162,21 +174,36 @@ int comprobar_opcion(int max){
     }
   }
 }
-  int cambiar_jugador(char jugador_actual[4][10], int jugador){
-    int opcion;
-    printf("el jugador actual es %s \n", &jugador_actual[jugador]);
-    printf("Eliga el jugador: \n");
-    for (int i = 0; i < 4; i++){
-      printf("%d %s\n",i+1,&jugador_actual[i]);
-    }
-    opcion=comprobar_opcion(4);
-    jugador=opcion-1;
-    limpiar();
+
+int cambiar_jugador(int jugador, int orden){
+    if (!jugador && orden<0) jugador = 3;
+    else if (jugador == 3 && orden >0) jugador = 0;
+    else jugador += orden;
+
     return jugador;
 }
 
+void borrar(char jugadores[4][10]){
+  DIR *dir;
+  struct dirent *carta;
+  char direccion[40], actual[10];
+  for (int i=0;i<6;i++){
+    if (i<4) {dir = opendir(jugadores[i]); strcpy(actual,jugadores[i]);}
+    else if (i == 4) {dir = opendir("mazo"); strcpy(actual,"mazo");}
+    else {dir = opendir("discard"); strcpy(actual, "discard");}
+
+    while ((carta = readdir(dir)))
+    {
+        // build the path for each file in the folder
+        sprintf(direccion, "%s/%s", actual, (carta->d_name));
+        remove(direccion);
+    }
+    closedir(dir);
+    rmdir(actual);
+  }
+}
+
 void uno(char jugador_actual[4][10]){
-  limpiar();
   int cont,opcion;
   char *carta;
   DIR* mano;
@@ -204,7 +231,7 @@ char* mostrar_discard(char *discard){
   DIR* disc;
   struct dirent *aux;
   disc = opendir(discard);
-  printf("DISCARD:\n");
+  printf("\nDISCARD:\n");
   while(aux = readdir(disc)){
     carta = (aux->d_name);
     //printf("carta es %s\n", carta);
@@ -221,34 +248,26 @@ char* mostrar_discard(char *discard){
 
 }
 
-int eleccion_carta(char *jugador){
-  int cant,opcion;
-  printf("Eliga la carta a jugar: \n");
-  cant=mostrar_mano(jugador);
-  opcion=comprobar_opcion(cant-1);
-  return opcion;
-}
-
- char* obtener_carta(char *jugador,int opcion){
+char* obtener_carta(char *jugador,int opcion){
    int cont=1;
    char *carta,*aux2;
    DIR* mano;
    struct dirent *aux;
    mano = opendir(jugador);
-   printf("MANO:\n");
    while(aux = readdir(mano)){
      carta = (aux->d_name);
      if (carta[0]!='.'){
        //aux2 = strtok(carta,".()");
-       printf("%d. %s\n",cont,carta);
        if (cont == opcion){
-         return carta;
+         break;
        }
        cont++;
      }
    }
    closedir(mano);
+   return carta;
 }
+
 int comprobar_color(char *carta,char *discard){
   char colores[4][9]={"rojo","amarillo","azul","verde"};
   char *token;
@@ -270,7 +289,7 @@ int comprobar_color(char *carta,char *discard){
   }
   token=strtok(carta," ");
   aux=strtok(discard," ");
- 
+
   comparar=strcmp(aux,token);
   if (comparar==0){
     comparar=strcmp(aux,"+2");
@@ -283,14 +302,14 @@ int comprobar_color(char *carta,char *discard){
 }
 
 int main(void){
-  //limpiar();
+  limpiar();
   printf("¡BIENVENIDO AL UNO!\n");
   srand(time(NULL));
-  char jugadores[4][10];
-  char discard[]="discard";
-  char *aux,*disc,*carta_jugar;
+  char jugadores[4][10], colores[4][10] = {"azul","rojo","verde","amarillo"};
+  char discard[]="discard", *efecto;
+  char *aux,*disc,*carta_jugar,color[10];
   bool ciclo = true;
-  int jugador=0,n_carta;
+  int opcion,opcion2,jugador=0,n_carta, orden = 1;
 
   //Creacion de directorios
   mkdir("mazo",0700);
@@ -303,38 +322,57 @@ int main(void){
   crear_cartas();
   for (int i=0;i<4;i++) {
     mkdir(jugadores[i],0700);
-    sacar_carta(jugadores[i],0);
+    sacar_carta(jugadores[i],7);
   }
   sacar_carta(discard,1);
 
-  while(ciclo){
-    int opcion,n_cartas;
-    //uno(jugadores);
+  while(en_mazo && ciclo){
+    printf("Es el turno de %s\n", jugadores[jugador]);
+    uno(jugadores);
     disc=mostrar_discard(discard);
-    printf("El jugador actual es %s\n", jugadores[jugador]);
-    mostrar_mano(jugadores[jugador]);
-    printf("Desee la accion a realizar: \n");
-    printf("1. Sacar carta \n2. Jugar carta \n3. Cambiar de jugador\n4. Salir\n");
-    opcion = comprobar_opcion(5);
+    n_carta = mostrar_mano(jugadores[jugador]);
+    printf("\n¿Que desea hacer? \n");
+    printf("1. Sacar carta \n2. Jugar carta \n3. Salir\n");
+    opcion = comprobar_opcion(4);
     if (opcion == 1){
       sacar_carta(jugadores[jugador],1);
       limpiar();
-      printf("El jugador %s ha sacado 1 carta \n", jugadores[jugador]);
-    }if(opcion == 2){
+      printf("El jugador %s ha sacado 1 carta \n\n", jugadores[jugador]);
+    }else if(opcion == 2){
       //limpiar();
-      n_carta=eleccion_carta(jugadores[jugador]);
+      printf("\n¿Que carta desea jugar? \n");
+      opcion2=comprobar_opcion(n_carta-1);
+      carta_jugar=obtener_carta(jugadores[jugador],opcion2);
 
-      carta_jugar=obtener_carta(jugadores[jugador],n_carta);
-      jugar_carta(jugadores[jugador],carta_jugar, disc);
+      efecto = jugar_carta(jugadores[jugador],carta_jugar, disc, color);
+      if (!strcmp(efecto,"Reversa")) orden *= -1;
+      else if (!strcmp(efecto,"Salto")) jugador = cambiar_jugador(jugador, orden);
+      else if (!strcmp(efecto,"+2")) {
+        jugador = cambiar_jugador(jugador,orden);
+        printf("\n%s debe sacar 2 cartas y pierde su turno.\n",jugadores[jugador]);
+        sacar_carta(jugadores[jugador],2);
+      }
+      else if (!strcmp(efecto,"Color")){
+        printf("\n¿A que color desea cambiar?\n1. Azul\n2. Rojo\n3. Verde\n4. Amarillo\n");
+        opcion2 = comprobar_opcion(5);
+        strcpy(color,colores[opcion2-1]);
+      }
+      else if (!strcmp(efecto,"+4")){
+        jugador = cambiar_jugador(jugador,orden);
+        sacar_carta(jugadores[jugador],4);
+        printf("¿A que color desea cambiar?\n1. Azul\n2. Rojo\n3. Verde\n4. Amarillo\n");
+        opcion2 = comprobar_opcion(5);
+        strcpy(color,colores[opcion2-1]);
+      }
       //printf("El jugador %s ha jugado \n",jugadores[jugador]);
       //printf("el valor de la carta elegida es %d\n",n_carta );
-    }if(opcion == 3){
-      limpiar();
-      jugador=cambiar_jugador(jugadores,jugador);
-    }if(opcion == 4){
+    }else if(opcion == 3){
       ciclo = false;
       limpiar();
     }
+  jugador = cambiar_jugador(jugador, orden);
+  limpiar();
   }
+  borrar(jugadores);
   return 0;
 }
